@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flutter &amp; Learn — Student</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+
+  <style>
+    /* Student App Layout */
+    body { background: var(--surface); overflow-x: hidden; }
+
+    .student-app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: var(--surface);
+    }
+
+    /* Scrollable content area above bottom nav */
+    #student-content {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 5rem;
+    }
+
+    /* Student sections */
+    .student-section { display: none; }
+    .student-section.active { display: block; }
+
+    /* Hero gradient header */
+    .hero-header {
+      background: var(--gradient-primary);
+      color: white;
+      padding: 2.5rem 1.25rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-header::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -20%;
+      width: 280px;
+      height: 280px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+    .hero-header::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 200px;
+      height: 200px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-stat {
+      background: rgba(255,255,255,0.18);
+      border-radius: var(--radius-lg);
+      padding: 0.875rem;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+    .hero-stat-value {
+      font-size: 1.375rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .hero-stat-label {
+      font-size: 0.625rem;
+      font-weight: 700;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Daily reward banner */
+    .daily-banner {
+      background: var(--surface-container-lowest);
+      border-radius: var(--radius-xl);
+      padding: 1rem 1.125rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 0 1rem;
+      margin-top: -1.75rem;
+      box-shadow: var(--shadow-bento);
+      position: relative;
+      z-index: 5;
+      transition: opacity 0.3s;
+    }
+
+    /* Subject grid */
+    .subject-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      padding: 0 1rem;
+    }
+    .subject-card {
+      border-radius: var(--radius-xl);
+      padding: 1.125rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .subject-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+    .subject-card.math    { background: var(--secondary-container); }
+    .subject-card.english { background: var(--tertiary-container); }
+    .subject-card.science { background: var(--primary-container); }
+    .subject-card.life    { background: var(--surface-container); }
+
+    /* Section padding */
+    .section-header {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 0.875rem;
+    }
+    .section-pad { padding: 1.25rem 1rem; }
+
+    /* Filter scroll */
+    .filter-scroll {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding: 0 1rem 0.5rem;
+      margin-bottom: 1rem;
+      scrollbar-width: none;
+    }
+    .filter-scroll::-webkit-scrollbar { display: none; }
+
+    /* Profile header */
+    .profile-hero {
+      background: var(--gradient-primary);
+      color: white;
+      padding: 2.5rem 1.25rem 3.5rem;
+      text-align: center;
+    }
+    .profile-avatar {
+      width: 5rem; height: 5rem;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin: 0 auto 0.75rem;
+      border: 3px solid rgba(255,255,255,0.3);
+    }
+
+    /* Profile cards */
+    .profile-card {
+      background: var(--surface-container-lowest);
+      border-radius: var(--radius-xl);
+      padding: 1.25rem;
+      margin: 0 1rem 1rem;
+      box-shadow: var(--shadow-bento);
+    }
+    .profile-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      text-align: center;
+      margin-top: -2rem;
+      margin-left: 1rem;
+      margin-right: 1rem;
+      background: var(--surface-container-lowest);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-bento);
+      padding: 1.25rem;
+      position: relative;
+      z-index: 2;
+    }
+    .profile-stat-divider {
+      border-right: 1px solid rgba(173,173,172,0.15);
+    }
+
+    /* Badge grid */
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="student-app">
+  <div id="student-content">
+
+    <!-- ═══════════════════════════════════════════════
+         HOME SECTION
+    ═══════════════════════════════════════════════ -->
+    <div class="student-section active" id="stu-home">
+
+      <!-- Hero Header -->
+      <div class="hero-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;position:relative;z-index:1">
+          <div style="display:flex;align-items:center;gap:0.75rem">
+            <div style="width:2.75rem;height:2.75rem;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:1.5rem">🐻</div>
+            <div>
+              <p style="font-size:0.8125rem;opacity:0.8;font-weight:500">สวัสดี,</p>
+              <h2 id="student-greeting" style="font-size:1.1rem;font-weight:800;line-height:1.2">นักเรียน!</h2>
+            </div>
+          </div>
+          <button onclick="Student.logout()" style="background:rgba(255,255,255,0.15);border:none;border-radius:var(--radius-full);padding:0.4rem 0.75rem;color:white;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Be Vietnam Pro',sans-serif">
+            ออกจากระบบ
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <p id="stu-stars-display" class="hero-stat-value">⭐ 0</p>
+            <p class="hero-stat-label">ดาว</p>
+          </div>
+          <div class="hero-stat">
+            <p id="stu-coins-display" class="hero-stat-value">🏅 0</p>
+            <p class="hero-stat-label">เหรียญ</p>
+          </div>
+          <div class="hero-stat">
+            <p id="stu-level-display" class="hero-stat-value">Lv.1</p>
+            <p class="hero-stat-label">ระดับ</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Reward Banner -->
+      <div class="daily-banner" id="daily-reward-banner">
+        <div style="width:3rem;height:3rem;border-radius:50%;background:var(--secondary-container);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0">🎁</div>
+        <div style="flex:1;min-width:0">
+          <p style="font-weight:700;font-size:0.9375rem">รางวัลรายวัน!</p>
+          <p style="font-size:0.8125rem;color:var(--on-surface-variant)">คลิกเพื่อรับรางวัลประจำวัน</p>
+        </div>
+        <button id="daily-claim-btn" onclick="Student.claimDailyReward()"
+          class="btn btn-primary bento-shadow" style="padding:0.5rem 1rem;font-size:0.8125rem;flex-shrink:0">
+          รับ!
+        </button>
+      </div>
+
+      <!-- Subject Cards -->
+      <div class="section-pad">
+        <p class="section-header">วิชาของฉัน</p>
+        <div class="subject-grid">
+          <div class="subject-card math" onclick="Student.showSection('subjects');Student.loadSubjects('math')">
+            <div style="font-size:2rem;margin-bottom:0.5rem">🔢</div>
+            <p style="font-weight:800;color:var(--on-secondary-container)">คณิตศาสตร์</p>
+            <p style="font-size:0.75rem;color:var(--on-secondary-container);opacity:0.7">บวก ลบ คูณ หาร</p>
+          </div>
+          <div class="subject-card english" onclick="Student.showSection('subjects');Student.loadSubjects('english')">
+            <div style="font-size:2rem;margin-bottom:0.5rem">🔤</div>
+            <p style="font-weight:800;color:var(--on-tertiary-container)">ภาษาอังกฤษ</p>
+            <p style="font-size:0.75rem;color:var(--on-tertiary-container);opacity:0.7">ABC & Vocabulary</p>
+          </div>
+          <div class="subject-card science" onclick="Student.showSection('subjects');Student.loadSubjects('science')">
+            <div style="font-size:2rem;margin-bottom:0.5rem">🔬</div>
+            <p style="font-weight:800;color:var(--on-primary-container)">วิทยาศาสตร์</p>
+            <p style="font-size:0.75rem;color:var(--on-primary-container);opacity:0.7">พืช สัตว์ โลก</p>
+          </div>
+          <div class="subject-card life" onclick="Student.showSection('subjects');Student.loadSubjects('life')">
+            <div style="font-size:2rem;margin-bottom:0.5rem">🌟</div>
+            <p style="font-weight:800;color:var(--on-surface)">ทักษะชีวิต</p>
+            <p style="font-size:0.75rem;color:var(--on-surface-variant)">สุขภาพ มารยาท</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Lessons -->
+      <div class="section-pad" style="padding-top:0">
+        <p class="section-header">บทเรียนล่าสุด</p>
+        <div id="recent-lessons" style="display:flex;flex-direction:column;gap:0.75rem"></div>
+        <button onclick="Student.showSection('subjects')" class="btn btn-outline" style="width:100%;margin-top:0.875rem">
+          ดูบทเรียนทั้งหมด →
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         SUBJECTS SECTION
+    ═══════════════════════════════════════════════ -->
+    <div class="student-section" id="stu-subjects">
+      <div class="section-pad" style="padding-bottom:0.75rem">
+        <h2 style="font-size:1.375rem;font-weight:800;margin-bottom:0.25rem">เลือกวิชา</h2>
+        <p style="color:var(--on-surface-variant);font-size:0.875rem">คลิกบทเรียนเพื่อเริ่มเรียนและรับดาว</p>
+      </div>
+      <div class="filter-scroll">
+        <button class="filter-btn active" data-subject="all" onclick="Student.loadSubjects('all')">ทั้งหมด</button>
+        <button class="filter-btn" data-subject="math" onclick="Student.loadSubjects('math')">🔢 คณิต</button>
+        <button class="filter-btn" data-subject="english" onclick="Student.loadSubjects('english')">🔤 อังกฤษ</button>
+        <button class="filter-btn" data-subject="science" onclick="Student.loadSubjects('science')">🔬 วิทย์</button>
+        <button class="filter-btn" data-subject="life" onclick="Student.loadSubjects('life')">🌟 ชีวิต</button>
+      </div>
+      <div id="subjects-lesson-list" style="display:flex;flex-direction:column;gap:0.75rem;padding:0 1rem 1rem"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         QUIZ SECTION
+    ═══════════════════════════════════════════════ -->
+    <div class="student-section" id="stu-quiz">
+      <div class="section-pad" style="padding-bottom:0.75rem">
+        <h2 style="font-size:1.375rem;font-weight:800;margin-bottom:0.25rem">แบบทดสอบ</h2>
+        <p style="color:var(--on-surface-variant);font-size:0.875rem">ทดสอบความรู้และรับเหรียญ!</p>
+      </div>
+      <div id="quiz-area" style="padding:0 1rem"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         PROFILE SECTION
+    ═══════════════════════════════════════════════ -->
+    <div class="student-section" id="stu-profile">
+
+      <!-- Profile Hero -->
+      <div class="profile-hero">
+        <div class="profile-avatar">🐻</div>
+        <h2 id="profile-name" style="font-size:1.5rem;font-weight:900">นักเรียน</h2>
+        <p id="profile-email" style="opacity:0.75;font-size:0.875rem;margin-top:0.25rem">email@example.com</p>
+      </div>
+
+      <!-- Stats Strip -->
+      <div class="profile-stats-grid">
+        <div class="profile-stat-divider">
+          <p id="profile-stars" style="font-size:1.625rem;font-weight:900;color:var(--primary)">0</p>
+          <p style="font-size:0.6875rem;color:var(--on-surface-variant);margin-top:0.25rem">⭐ ดาว</p>
+        </div>
+        <div class="profile-stat-divider">
+          <p id="profile-coins" style="font-size:1.625rem;font-weight:900;color:var(--secondary)">0</p>
+          <p style="font-size:0.6875rem;color:var(--on-surface-variant);margin-top:0.25rem">🏅 เหรียญ</p>
+        </div>
+        <div>
+          <p id="profile-level" style="font-size:1.625rem;font-weight:900;color:var(--tertiary)">1</p>
+          <p style="font-size:0.6875rem;color:var(--on-surface-variant);margin-top:0.25rem">🎯 ระดับ</p>
+        </div>
+      </div>
+
+      <!-- XP Progress -->
+      <div class="profile-card" style="margin-top:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.625rem">
+          <p style="font-weight:700;font-size:0.9375rem">ความก้าวหน้า</p>
+          <p id="profile-xp-text" style="font-size:0.8125rem;color:var(--on-surface-variant)">0 / 100 XP</p>
+        </div>
+        <div class="progress-bar">
+          <div id="profile-xp-bar" class="progress-fill" style="width:0%"></div>
+        </div>
+        <p style="font-size:0.75rem;color:var(--on-surface-variant);margin-top:0.5rem">เรียนบทเรียนเพื่อสะสม XP และขึ้นระดับ</p>
+      </div>
+
+      <!-- Badges -->
+      <div class="profile-card">
+        <p style="font-weight:700;font-size:0.9375rem;margin-bottom:1rem">เหรียญตราที่ได้รับ</p>
+        <div id="profile-badges" class="badge-grid"></div>
+      </div>
+
+      <!-- Completed Lessons -->
+      <div class="profile-card">
+        <p style="font-weight:700;font-size:0.9375rem;margin-bottom:0.875rem">บทเรียนที่เรียนแล้ว</p>
+        <div id="profile-completed"></div>
+      </div>
+    </div>
+
+  </div><!-- end #student-content -->
+
+  <!-- ===== BOTTOM NAVIGATION ===== -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item active" id="snav-home" onclick="Student.showSection('home')">
+      <span class="material-symbols-outlined" style="font-size:1.375rem">home</span>
+      <span>หน้าแรก</span>
+    </button>
+    <button class="bottom-nav-item" id="snav-subjects" onclick="Student.showSection('subjects')">
+      <span class="material-symbols-outlined" style="font-size:1.375rem">menu_book</span>
+      <span>วิชา</span>
+    </button>
+    <button class="bottom-nav-item" id="snav-quiz" onclick="Student.showSection('quiz')">
+      <span class="material-symbols-outlined" style="font-size:1.375rem">quiz</span>
+      <span>ทดสอบ</span>
+    </button>
+    <button class="bottom-nav-item" id="snav-profile" onclick="Student.showSection('profile')">
+      <span class="material-symbols-outlined" style="font-size:1.375rem">person</span>
+      <span>โปรไฟล์</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ===== LESSON VIEWER MODAL ===== -->
+<div class="modal-overlay" id="lesson-modal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
+      <div>
+        <span id="lesson-modal-subject" class="badge badge-math" style="margin-bottom:0.5rem;display:inline-flex">วิชา</span>
+        <h2 id="lesson-modal-title" style="font-size:1.25rem;font-weight:800;line-height:1.3">ชื่อบทเรียน</h2>
+      </div>
+      <button onclick="UI.closeModal('lesson-modal')" style="background:none;border:none;cursor:pointer;color:var(--on-surface-variant);margin-left:0.75rem;flex-shrink:0">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <!-- Video Area (dynamic) -->
+    <div id="lesson-video-area" style="margin-bottom:1rem;border-radius:var(--radius-lg);overflow:hidden"></div>
+    <!-- Description -->
+    <p id="lesson-modal-desc" style="color:var(--on-surface-variant);font-size:0.9rem;margin-bottom:1.25rem;line-height:1.6"></p>
+    <!-- Buttons -->
+    <div style="display:flex;gap:0.75rem">
+      <button id="lesson-complete-btn" class="btn btn-primary bento-shadow" style="flex:1">
+        ✅ เรียนเสร็จแล้ว!
+      </button>
+      <button onclick="UI.closeModal('lesson-modal')" class="btn btn-outline" style="padding:0.75rem 1.25rem">
+        ปิด
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts (order: db → auth helpers → student) -->
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/student.js"></script>
+</body>
+</html>

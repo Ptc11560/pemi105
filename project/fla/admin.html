@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flutter &amp; Learn — Admin Panel</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+
+  <style>
+    /* Admin Layout */
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+    .admin-main {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 2rem;
+    }
+    @media (max-width: 768px) {
+      .admin-main { padding: 1rem; height: auto; }
+    }
+
+    /* Mobile top nav */
+    .mobile-top-nav {
+      display: none;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 768px) { .mobile-top-nav { display: flex; } }
+
+    .mobile-tab {
+      flex-shrink: 0;
+      padding: 0.5rem 0.875rem;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: var(--surface-container);
+      color: var(--on-surface-variant);
+      font-family: 'Be Vietnam Pro', sans-serif;
+      transition: all 0.2s;
+    }
+    .mobile-tab.active { background: var(--primary-container); color: var(--primary); }
+
+    /* Stat Cards grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (min-width: 1024px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    /* Dashboard 2-col */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    @media (min-width: 1024px) { .dash-grid { grid-template-columns: 2fr 1fr; } }
+
+    /* Table layout */
+    .table-wrap {
+      background: var(--surface-container-lowest);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-bento);
+    }
+
+    /* Bar chart (CSS only) */
+    .bar-chart {
+      height: 12rem;
+      display: flex;
+      align-items: flex-end;
+      gap: 0.75rem;
+      padding: 0 0.25rem;
+    }
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .bar-fill {
+      width: 100%;
+      background: var(--gradient-primary);
+      border-radius: 0.5rem 0.5rem 0 0;
+      transition: height 0.6s ease;
+      opacity: 0.85;
+    }
+    .bar-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: var(--on-surface-variant);
+      text-transform: uppercase;
+    }
+
+    /* Reward controls */
+    .reward-grid {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (min-width: 768px) { .reward-grid { grid-template-columns: repeat(3, 1fr); } }
+
+    .reward-card {
+      background: var(--surface-container-lowest);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: var(--shadow-bento);
+    }
+    .reward-adjuster {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    .adj-btn {
+      width: 2rem; height: 2rem;
+      border-radius: var(--radius-full);
+      background: var(--surface-container);
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-weight: 700;
+      transition: background 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .adj-btn:hover { background: var(--surface-container-high); }
+  </style>
+</head>
+<body>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="admin-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <!-- Profile -->
+    <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;margin-bottom:1rem">
+      <div class="bg-gradient-primary bento-shadow" style="width:2.5rem;height:2.5rem;border-radius:var(--radius-full);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined" style="color:white;font-size:1.1rem">admin_panel_settings</span>
+      </div>
+      <div style="min-width:0">
+        <p style="font-weight:700;color:var(--primary);font-size:0.875rem">Admin Panel</p>
+        <p id="admin-name-display" style="font-size:0.75rem;color:var(--on-surface-variant);truncate">ผู้ดูแลระบบ</p>
+      </div>
+    </div>
+
+    <!-- Nav links -->
+    <nav style="flex:1;display:flex;flex-direction:column;gap:0.25rem">
+      <button class="sidebar-link active" id="nav-dashboard" onclick="Admin.showSection('dashboard')">
+        <span class="material-symbols-outlined">dashboard</span> Dashboard
+      </button>
+      <button class="sidebar-link" id="nav-lessons" onclick="Admin.showSection('lessons')">
+        <span class="material-symbols-outlined">menu_book</span> จัดการบทเรียน
+      </button>
+      <button class="sidebar-link" id="nav-quizzes" onclick="Admin.showSection('quizzes')">
+        <span class="material-symbols-outlined">quiz</span> จัดการแบบทดสอบ
+      </button>
+      <button class="sidebar-link" id="nav-users" onclick="Admin.showSection('users')">
+        <span class="material-symbols-outlined">group</span> จัดการผู้ใช้
+      </button>
+      <button class="sidebar-link" id="nav-rewards" onclick="Admin.showSection('rewards')">
+        <span class="material-symbols-outlined">emoji_events</span> รางวัล
+      </button>
+    </nav>
+
+    <!-- Add Lesson shortcut -->
+    <button class="btn btn-primary bento-shadow" style="width:100%;margin:0.5rem 0" onclick="Admin.showSection('lessons');Admin.openAddLesson()">
+      <span class="material-symbols-outlined" style="font-size:1.1rem">add</span> เพิ่มบทเรียน
+    </button>
+
+    <!-- Logout -->
+    <div style="padding-top:0.75rem;border-top:1px solid rgba(173,173,172,0.1)">
+      <button class="sidebar-link" onclick="Admin.logout()">
+        <span class="material-symbols-outlined">logout</span> ออกจากระบบ
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="admin-main">
+
+    <!-- Mobile Nav -->
+    <div class="mobile-top-nav">
+      <button class="mobile-tab active" data-section="dashboard" onclick="Admin.showSection('dashboard')">Dashboard</button>
+      <button class="mobile-tab" data-section="lessons"   onclick="Admin.showSection('lessons')">บทเรียน</button>
+      <button class="mobile-tab" data-section="quizzes"   onclick="Admin.showSection('quizzes')">แบบทดสอบ</button>
+      <button class="mobile-tab" data-section="users"     onclick="Admin.showSection('users')">ผู้ใช้</button>
+      <button class="mobile-tab" data-section="rewards"   onclick="Admin.showSection('rewards')">รางวัล</button>
+      <button class="mobile-tab" style="background:var(--error-container);color:var(--on-error-container)" onclick="Admin.logout()">ออก</button>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <section class="page-section active" id="section-dashboard">
+      <header style="margin-bottom:2rem">
+        <h1 style="font-size:2rem;font-weight:800;margin-bottom:0.25rem">
+          ยินดีต้อนรับ, <span id="admin-greeting">Admin</span>!
+        </h1>
+        <p style="color:var(--on-surface-variant)">ภาพรวมระบบ Flutter &amp; Learn Academy</p>
+      </header>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">
+            <div style="padding:0.625rem;border-radius:var(--radius-full);background:var(--secondary-container)">
+              <span class="material-symbols-outlined" style="color:var(--on-secondary-container)">school</span>
+            </div>
+            <span style="font-size:0.6875rem;font-weight:700;color:#059669;background:#d1fae5;padding:0.2rem 0.6rem;border-radius:var(--radius-full)">+12%</span>
+          </div>
+          <p style="font-size:0.8125rem;color:var(--on-surface-variant);font-weight:500;margin-bottom:0.25rem">นักเรียนทั้งหมด</p>
+          <h3 id="stat-students" style="font-size:1.875rem;font-weight:900">0</h3>
+        </div>
+
+        <div class="stat-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">
+            <div style="padding:0.625rem;border-radius:var(--radius-full);background:var(--primary-container)">
+              <span class="material-symbols-outlined" style="color:var(--on-primary-container)">auto_stories</span>
+            </div>
+            <span style="font-size:0.6875rem;font-weight:700;color:var(--primary);background:rgba(254,151,185,0.2);padding:0.2rem 0.6rem;border-radius:var(--radius-full)">Active</span>
+          </div>
+          <p style="font-size:0.8125rem;color:var(--on-surface-variant);font-weight:500;margin-bottom:0.25rem">บทเรียน</p>
+          <h3 id="stat-lessons" style="font-size:1.875rem;font-weight:900">0</h3>
+        </div>
+
+        <div class="stat-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">
+            <div style="padding:0.625rem;border-radius:var(--radius-full);background:var(--tertiary-container)">
+              <span class="material-symbols-outlined" style="color:var(--on-tertiary-container)">assignment_turned_in</span>
+            </div>
+            <span style="font-size:0.6875rem;font-weight:700;color:var(--tertiary);background:rgba(129,212,250,0.25);padding:0.2rem 0.6rem;border-radius:var(--radius-full)">+85%</span>
+          </div>
+          <p style="font-size:0.8125rem;color:var(--on-surface-variant);font-weight:500;margin-bottom:0.25rem">แบบทดสอบ</p>
+          <h3 id="stat-quizzes" style="font-size:1.875rem;font-weight:900">0</h3>
+        </div>
+
+        <div style="background:var(--on-primary-fixed);border-radius:var(--radius-lg);padding:1.25rem;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden;box-shadow:var(--shadow-bento)">
+          <span class="material-symbols-outlined" style="position:absolute;top:0.75rem;right:0.75rem;color:rgba(255,255,255,0.2);font-size:2.5rem">check_circle</span>
+          <span class="material-symbols-outlined" style="color:var(--on-primary);font-size:1.75rem;margin-bottom:0.5rem">verified</span>
+          <h4 style="color:var(--on-primary);font-weight:700;font-size:0.9375rem">ระบบทำงานปกติ</h4>
+          <p style="color:rgba(255,239,241,0.7);font-size:0.75rem;margin-top:0.25rem">All services running</p>
+        </div>
+      </div>
+
+      <!-- Chart + Activity -->
+      <div class="dash-grid">
+        <!-- Bar Chart -->
+        <div class="card" style="padding:1.5rem">
+          <h3 style="font-size:1.25rem;font-weight:700;margin-bottom:0.25rem">การเติบโตของผู้ใช้</h3>
+          <p style="color:var(--on-surface-variant);font-size:0.875rem;margin-bottom:1.5rem">จำนวนนักเรียนรายเดือน</p>
+          <div class="bar-chart">
+            <div class="bar-col"><div class="bar-fill" style="height:40%"></div><span class="bar-label">ม.ค.</span></div>
+            <div class="bar-col"><div class="bar-fill" style="height:60%"></div><span class="bar-label">ก.พ.</span></div>
+            <div class="bar-col"><div class="bar-fill" style="height:55%"></div><span class="bar-label">มี.ค.</span></div>
+            <div class="bar-col"><div class="bar-fill" style="height:85%"></div><span class="bar-label">เม.ย.</span></div>
+            <div class="bar-col"><div class="bar-fill" style="height:70%"></div><span class="bar-label">พ.ค.</span></div>
+            <div class="bar-col"><div class="bar-fill" style="height:100%;opacity:1"></div><span class="bar-label" style="color:var(--primary)">มิ.ย.</span></div>
+          </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="card" style="padding:1.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+            <h3 style="font-size:1.1rem;font-weight:700">กิจกรรมล่าสุด</h3>
+            <span class="pulse" style="width:0.5rem;height:0.5rem;border-radius:var(--radius-full);background:var(--primary);display:inline-block"></span>
+          </div>
+          <div id="admin-activity-feed" style="display:flex;flex-direction:column;gap:1rem"></div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+        <button class="btn btn-primary bento-shadow" onclick="Admin.showSection('lessons');Admin.openAddLesson()">
+          <span class="material-symbols-outlined" style="font-size:1.1rem">add</span> เพิ่มบทเรียนใหม่
+        </button>
+        <button class="btn btn-outline" onclick="Admin.showSection('users')">
+          <span class="material-symbols-outlined" style="font-size:1.1rem">group</span> ดูผู้ใช้ทั้งหมด
+        </button>
+        <button class="btn btn-outline" onclick="Admin.showSection('quizzes');Admin.openAddQuiz()">
+          <span class="material-symbols-outlined" style="font-size:1.1rem">quiz</span> เพิ่มคำถามใหม่
+        </button>
+      </div>
+    </section>
+
+    <!-- ── LESSONS ── -->
+    <section class="page-section" id="section-lessons">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.75rem">
+        <div>
+          <h1 style="font-size:1.5rem;font-weight:800">จัดการบทเรียน</h1>
+          <p style="color:var(--on-surface-variant);font-size:0.875rem">เพิ่ม แก้ไข และลบบทเรียน</p>
+        </div>
+        <button class="btn btn-primary bento-shadow" onclick="Admin.openAddLesson()">
+          <span class="material-symbols-outlined" style="font-size:1.1rem">add</span> เพิ่มบทเรียน
+        </button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header" style="grid-template-columns:1fr auto auto auto auto">
+          <span>ชื่อบทเรียน</span>
+          <span style="margin-right:3rem">วิชา</span>
+          <span style="margin-right:2rem">ระดับ</span>
+          <span style="margin-right:1rem">วิดีโอ</span>
+          <span>จัดการ</span>
+        </div>
+        <div id="lessons-list"></div>
+      </div>
+    </section>
+
+    <!-- ── QUIZZES ── -->
+    <section class="page-section" id="section-quizzes">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.75rem">
+        <div>
+          <h1 style="font-size:1.5rem;font-weight:800">จัดการแบบทดสอบ</h1>
+          <p style="color:var(--on-surface-variant);font-size:0.875rem">สร้างและแก้ไขคำถาม</p>
+        </div>
+        <button class="btn btn-primary bento-shadow" onclick="Admin.openAddQuiz()">
+          <span class="material-symbols-outlined" style="font-size:1.1rem">add</span> เพิ่มคำถาม
+        </button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header" style="grid-template-columns:1fr auto auto">
+          <span>คำถาม / เฉลย</span>
+          <span style="margin-right:1.5rem">วิชา</span>
+          <span>จัดการ</span>
+        </div>
+        <div id="quizzes-list"></div>
+      </div>
+    </section>
+
+    <!-- ── USERS ── -->
+    <section class="page-section" id="section-users">
+      <div style="margin-bottom:1.5rem">
+        <h1 style="font-size:1.5rem;font-weight:800">จัดการผู้ใช้</h1>
+        <p style="color:var(--on-surface-variant);font-size:0.875rem">รายชื่อนักเรียนและข้อมูลความก้าวหน้า</p>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header" style="grid-template-columns:1fr 1fr auto auto auto">
+          <span>ชื่อ / ระดับ</span>
+          <span>อีเมล</span>
+          <span style="margin-right:0.5rem">⭐ ดาว</span>
+          <span style="margin-right:0.5rem">🏅 เหรียญ</span>
+          <span>ลบ</span>
+        </div>
+        <div id="users-list"></div>
+      </div>
+    </section>
+
+    <!-- ── REWARDS ── -->
+    <section class="page-section" id="section-rewards">
+      <div style="margin-bottom:1.5rem">
+        <h1 style="font-size:1.5rem;font-weight:800">จัดการรางวัล</h1>
+        <p style="color:var(--on-surface-variant);font-size:0.875rem">ตั้งค่าดาว เหรียญ และรางวัลรายวัน</p>
+      </div>
+
+      <div class="reward-grid">
+        <div class="reward-card">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem">⭐</div>
+          <h3 style="font-weight:700;font-size:1rem">ดาวต่อบทเรียน</h3>
+          <p style="font-size:0.8125rem;color:var(--on-surface-variant);margin-top:0.25rem">รับเมื่อเรียนจบ 1 บทเรียน</p>
+          <div class="reward-adjuster">
+            <button class="adj-btn" onclick="Admin.adjustReward('lesson_stars', -1)">−</button>
+            <span id="reward-lesson_stars" style="font-size:1.75rem;font-weight:900;color:var(--primary);min-width:2.5rem;text-align:center">3</span>
+            <button class="adj-btn" onclick="Admin.adjustReward('lesson_stars', 1)">+</button>
+          </div>
+        </div>
+        <div class="reward-card">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem">🏅</div>
+          <h3 style="font-weight:700;font-size:1rem">เหรียญต่อ Quiz</h3>
+          <p style="font-size:0.8125rem;color:var(--on-surface-variant);margin-top:0.25rem">รับตามสัดส่วนคะแนน</p>
+          <div class="reward-adjuster">
+            <button class="adj-btn" onclick="Admin.adjustReward('quiz_coins', -5)">−</button>
+            <span id="reward-quiz_coins" style="font-size:1.75rem;font-weight:900;color:var(--primary);min-width:2.5rem;text-align:center">10</span>
+            <button class="adj-btn" onclick="Admin.adjustReward('quiz_coins', 5)">+</button>
+          </div>
+        </div>
+        <div class="reward-card">
+          <div style="font-size:2.5rem;margin-bottom:0.5rem">🎁</div>
+          <h3 style="font-weight:700;font-size:1rem">รางวัลรายวัน</h3>
+          <p style="font-size:0.8125rem;color:var(--on-surface-variant);margin-top:0.25rem">รับได้ 1 ครั้งต่อวัน</p>
+          <div class="reward-adjuster">
+            <button class="adj-btn" onclick="Admin.adjustReward('daily_reward', -5)">−</button>
+            <span id="reward-daily_reward" style="font-size:1.75rem;font-weight:900;color:var(--primary);min-width:2.5rem;text-align:center">20</span>
+            <button class="adj-btn" onclick="Admin.adjustReward('daily_reward', 5)">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badges showcase -->
+      <div class="card" style="padding:1.5rem">
+        <h3 style="font-weight:700;font-size:1.1rem;margin-bottom:1rem">เหรียญตราในระบบ</h3>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem">
+          <div style="background:var(--surface-container);border-radius:var(--radius-md);padding:1rem;text-align:center">
+            <div style="font-size:2rem;margin-bottom:0.375rem">🚀</div>
+            <p style="font-size:0.8125rem;font-weight:700">Speed Runner</p>
+            <p style="font-size:0.6875rem;color:var(--on-surface-variant);margin-top:0.25rem">Quiz เสร็จใน 60 วิ</p>
+          </div>
+          <div style="background:var(--surface-container);border-radius:var(--radius-md);padding:1rem;text-align:center">
+            <div style="font-size:2rem;margin-bottom:0.375rem">🌟</div>
+            <p style="font-size:0.8125rem;font-weight:700">Star Collector</p>
+            <p style="font-size:0.6875rem;color:var(--on-surface-variant);margin-top:0.25rem">สะสม 50 ดาว</p>
+          </div>
+          <div style="background:var(--surface-container);border-radius:var(--radius-md);padding:1rem;text-align:center">
+            <div style="font-size:2rem;margin-bottom:0.375rem">📚</div>
+            <p style="font-size:0.8125rem;font-weight:700">Bookworm</p>
+            <p style="font-size:0.6875rem;color:var(--on-surface-variant);margin-top:0.25rem">เรียน 5 บทเรียน</p>
+          </div>
+          <div style="background:var(--surface-container);border-radius:var(--radius-md);padding:1rem;text-align:center">
+            <div style="font-size:2rem;margin-bottom:0.375rem">🏆</div>
+            <p style="font-size:0.8125rem;font-weight:700">Top Student</p>
+            <p style="font-size:0.6875rem;color:var(--on-surface-variant);margin-top:0.25rem">อันดับ 1</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Add/Edit Lesson Modal -->
+<div class="modal-overlay" id="add-lesson-modal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+      <h2 id="lesson-modal-heading" style="font-size:1.25rem;font-weight:700">เพิ่มบทเรียนใหม่</h2>
+      <button onclick="UI.closeModal('add-lesson-modal')" style="background:none;border:none;cursor:pointer;color:var(--on-surface-variant)">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      <div>
+        <label class="label">ชื่อบทเรียน *</label>
+        <input class="input-field" id="lesson-title-input" type="text" placeholder="เช่น การบวกเลข 1-10"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+        <div>
+          <label class="label">วิชา *</label>
+          <select class="input-field" id="lesson-subject-input">
+            <option value="math">🔢 คณิตศาสตร์</option>
+            <option value="english">🔤 ภาษาอังกฤษ</option>
+            <option value="science">🔬 วิทยาศาสตร์</option>
+            <option value="life">🌟 ทักษะชีวิต</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">ระดับ *</label>
+          <select class="input-field" id="lesson-level-input">
+            <option value="1">ระดับ 1 — เริ่มต้น</option>
+            <option value="2">ระดับ 2 — กลาง</option>
+            <option value="3">ระดับ 3 — สูง</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="label">URL วิดีโอ YouTube (ถ้ามี)</label>
+        <input class="input-field" id="lesson-video-input" type="url" placeholder="https://youtube.com/watch?v=..."/>
+      </div>
+      <div>
+        <label class="label">คำอธิบาย</label>
+        <textarea class="input-field" id="lesson-desc-input" rows="3" placeholder="อธิบายบทเรียนนี้..." style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
+      <button class="btn btn-primary bento-shadow" style="flex:1" onclick="Admin.saveLesson()">บันทึก</button>
+      <button class="btn btn-outline" style="padding:0.75rem 1.5rem" onclick="UI.closeModal('add-lesson-modal')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Quiz Modal -->
+<div class="modal-overlay" id="add-quiz-modal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+      <h2 id="quiz-modal-heading" style="font-size:1.25rem;font-weight:700">เพิ่มคำถามใหม่</h2>
+      <button onclick="UI.closeModal('add-quiz-modal')" style="background:none;border:none;cursor:pointer;color:var(--on-surface-variant)">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      <div>
+        <label class="label">คำถาม *</label>
+        <textarea class="input-field" id="quiz-question-input" rows="2" placeholder="ใส่คำถามที่นี่..." style="resize:none"></textarea>
+      </div>
+      <div>
+        <label class="label">วิชา</label>
+        <select class="input-field" id="quiz-subject-input">
+          <option value="math">🔢 คณิตศาสตร์</option>
+          <option value="english">🔤 ภาษาอังกฤษ</option>
+          <option value="science">🔬 วิทยาศาสตร์</option>
+          <option value="life">🌟 ทักษะชีวิต</option>
+        </select>
+      </div>
+      <div>
+        <label class="label">ตัวเลือก (✓ = คำตอบที่ถูกต้อง)</label>
+        <div style="display:flex;flex-direction:column;gap:0.5rem">
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <input type="radio" name="correct-answer" value="0" checked style="accent-color:var(--primary);width:1rem;height:1rem"/>
+            <input class="input-field quiz-option-input" type="text" placeholder="ตัวเลือก ก" style="padding:0.625rem 0.875rem;font-size:0.9rem"/>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <input type="radio" name="correct-answer" value="1" style="accent-color:var(--primary);width:1rem;height:1rem"/>
+            <input class="input-field quiz-option-input" type="text" placeholder="ตัวเลือก ข" style="padding:0.625rem 0.875rem;font-size:0.9rem"/>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <input type="radio" name="correct-answer" value="2" style="accent-color:var(--primary);width:1rem;height:1rem"/>
+            <input class="input-field quiz-option-input" type="text" placeholder="ตัวเลือก ค" style="padding:0.625rem 0.875rem;font-size:0.9rem"/>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <input type="radio" name="correct-answer" value="3" style="accent-color:var(--primary);width:1rem;height:1rem"/>
+            <input class="input-field quiz-option-input" type="text" placeholder="ตัวเลือก ง" style="padding:0.625rem 0.875rem;font-size:0.9rem"/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;margin-top:1.5rem">
+      <button class="btn btn-primary bento-shadow" style="flex:1" onclick="Admin.saveQuiz()">บันทึก</button>
+      <button class="btn btn-outline" style="padding:0.75rem 1.5rem" onclick="UI.closeModal('add-quiz-modal')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box sm" style="text-align:center">
+    <div style="font-size:3.5rem;margin-bottom:1rem">🗑️</div>
+    <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.5rem">ยืนยันการลบ</h2>
+    <p id="confirm-msg" style="color:var(--on-surface-variant);font-size:0.9rem;margin-bottom:1.5rem">คุณต้องการลบรายการนี้ใช่ไหม?</p>
+    <div style="display:flex;gap:0.75rem">
+      <button id="confirm-yes-btn" class="btn btn-danger" style="flex:1">ลบ</button>
+      <button class="btn btn-outline" style="flex:1" onclick="UI.closeModal('confirm-modal')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts (order: db → auth helpers → admin) -->
+<script src="js/db.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
